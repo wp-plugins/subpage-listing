@@ -4,7 +4,7 @@ Plugin Name: Subpage Listing
 Plugin URI: http://txfx.net/code/wordpress/subpage-listing/
 Description: Displays a directory-like listing of subpages where &lt;!--%subpages%--&gt; exists in the content of pages.  Also, it will be displayed if a page is blank.
 Author: Mark Jaquith
-Version: 0.3
+Version: 0.4
 Author URI: http://txfx.net
 */
 
@@ -24,8 +24,6 @@ Author URI: http://txfx.net
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
-/* Many thanks to Owen Winker for his Edit Button Framework [ http://www.asymptomatic.net/wp-hacks ] */
 
 function txfx_wp_subpage_display($text) {
 
@@ -57,44 +55,34 @@ return $text;
 
 
 function txfx_wp_subpage_display_js() {
-	global $post_status;
+global $post_status;
 	if( strpos($_SERVER['REQUEST_URI'], 'page-new.php') ||  (strpos($_SERVER['REQUEST_URI'], 'post.php') && ($post_status == 'static')) ) : ?>
-	<script language="JavaScript" type="text/javascript"><!--
-		var toolbar = document.getElementById("ed_toolbar");
-
-	<?php
-	edit_insert_button("Subpage List", "txfx_subpage_list_display", "Subpage List");
-	?>
-
-	function txfx_subpage_list_display() {
-		edInsertContent(edCanvas, '\n\n<!--%subpages%-->\n\n');	
+<script type="text/javascript">
+<!--
+function txfx_insertAtCursor(myField, myValue) {
+		  //IE support
+		  if (document.selection) {
+			myField.focus();
+			sel = document.selection.createRange();
+			sel.text = myValue;
+		  }
+		  //MOZILLA/NETSCAPE support
+		  else if (myField.selectionStart || myField.selectionStart == '0') {
+			var startPos = myField.selectionStart;
+			var endPos = myField.selectionEnd;
+			myField.value = myField.value.substring(0, startPos)
+						  + myValue 
+						  + myField.value.substring(endPos, myField.value.length);
+		  } else {
+			myField.value += myValue;
+		}
 	}
 
-	//--></script>
-	<?php endif;
-}
+document.getElementById("quicktags").innerHTML += "<input type=\"button\" class=\"ed_button\" id=\"txfx_subpages\" value=\"Subpage List\" onclick=\"txfx_insertAtCursor(document.post.content, '\\n\\n<!--%subpages%-->\\n\\n');\" />";
+//-->
+</script>
 
-
-if(!function_exists('edit_insert_button'))
-{
-	//edit_insert_button: Inserts a button into the editor
-	function edit_insert_button($caption, $js_onclick, $title = '')
-	{
-	?>
-	if(toolbar)
-	{
-		var theButton = document.createElement('input');
-		theButton.type = 'button';
-		theButton.value = '<?php echo $caption; ?>';
-		theButton.onclick = <?php echo $js_onclick; ?>;
-		theButton.className = 'ed_button';
-		theButton.title = "<?php echo $title; ?>";
-		theButton.id = "<?php echo "ed_{$caption}"; ?>";
-		toolbar.appendChild(theButton);
-	}
-	<?php
-
-	}
+<?php endif;	
 }
 
 
