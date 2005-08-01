@@ -4,7 +4,7 @@ Plugin Name: Subpage Listing
 Plugin URI: http://txfx.net/code/wordpress/subpage-listing/
 Description: Displays a directory-like listing of subpages where &lt;!--%subpages%--&gt; exists in the content of pages.  Also, it will be displayed if a page is blank.
 Author: Mark Jaquith
-Version: 0.4
+Version: 0.5
 Author URI: http://txfx.net
 */
 
@@ -40,6 +40,9 @@ global $post;
 if ( strpos($text, '<!--%subpages%-->') !== FALSE || empty($post->post_content) || $post->post_content == "<br />\n" ) {
 	$subpage_text = wp_list_pages('child_of=' . $post->ID . '&depth=' . $depth . '&echo=0&title_li=0');
 
+	// for the preformatted plugin, which will have wrapped the tag in a paragraph
+	$text = str_replace('<p><!--%subpages%--></p>', '<!--%subpages%-->', $text);
+
 	if ( strpos($subpage_text, '</li>') === FALSE )
 		return str_replace('<!--%subpages%-->', '', $text);
 
@@ -52,7 +55,6 @@ if ( strpos($text, '<!--%subpages%-->') !== FALSE || empty($post->post_content) 
 
 return $text;
 }
-
 
 function txfx_wp_subpage_display_js() {
 global $post_status;
