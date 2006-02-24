@@ -34,7 +34,7 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 
 	$params = txfx_wp_subpages_tag_extraction($post->post_content);
 
-	if ( is_array($params) || '' == $text || '' == $post->post_content || $post->post_content == "<br />\n" ) {
+	if ( is_array($params) || is_array($text) || '' == $text || '' == $post->post_content || $post->post_content == "<br />\n" ) {
 
 		if ( isset($params[0]) )	$depth = $params[0];
 		if ( isset($params[1]) )	$show_parent = $params[1];
@@ -44,8 +44,8 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 
 		if ( $show_parent && $post->post_parent ) {
 			$parent = &get_post($post->post_parent);
-			$before = '<ul><li class="page_item">&uarr;<a href="' . get_page_link($parent->ID) . '">' . wp_specialchars($parent->post_title) . '</a>';
-			$after = '</li></ul>';
+			$before = '<li class="page_item">&uarr;<a href="' . get_page_link($parent->ID) . '">' . wp_specialchars($parent->post_title) . '</a><ul>';
+			$after = '</ul></li>';
 		}
 
 		if ( $show_siblings ) {
@@ -56,13 +56,22 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 		// for the preformatted plugin, which will have wrapped the tag in a paragraph
 		$text = preg_replace('#<p><!--%subpages(.*?)%--></p>#i', '<!--%subpages$1%-->', $text);
 
-		if ( strpos($subpage_text, '</li>') === FALSE && !$show_parent )
-			return str_replace('<!--%subpages%-->', '', $text);
+		if ( strpos($subpage_text, '</li>') === FALSE ) { // no subpages or siblings
+			if ( !$show_parent || !$post->post_parent )
+				return $text;
+		} else { // subpages or siblings exist
+			$output = "\n $subpage_text \n";
+		}
+
+		$output = $before . $output . $after; // add parent stuff
+
+		if ( is_array($text) ) // if this is called via txfx_wp_subpages()
+			$output = '<ul>' . $output . '</ul>';
 
 		if ( strpos($text, '<!--%subpages') !== FALSE )
-			return preg_replace('#<!--%subpages(.*?)%-->#', $before . "<ul>\n $subpage_text \n </ul>" . $after, $text);
+			return preg_replace('#<!--%subpages(.*?)%-->#', $output, $text);
 
-		return $before . "<ul>\n $subpage_text \n </ul>" . $after;
+		return $output;
 	}
 
 return $text;
@@ -80,7 +89,7 @@ function txfx_wp_subpages_tag_extraction($text) {
 
 
 function txfx_wp_subpages($depth=5, $show_parent=false, $show_sibling=false, $before='<ul>', $after='</ul>', $echo=true) {
-	$subpages = txfx_wp_subpage_display('', $depth, $show_parent, $show_sibling);
+	$subpages = txfx_wp_subpage_display(array(), $depth, $show_parent, $show_sibling);
 
 	if ( !$subpages )
 		return false;
