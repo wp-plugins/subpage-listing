@@ -2,9 +2,9 @@
 /*
 Plugin Name: Subpage Listing
 Plugin URI: http://txfx.net/code/wordpress/subpage-listing/
-Description: Displays a directory-like listing of subpages where &lt;!--%subpages%--&gt; exists in the content of pages.  Also, it will be displayed if a page is blank.
+Description: Displays a directory-like listing of subpages where &lt;!--%subpages%--&gt; exists in the content of pages.  It will be displayed if a page is blank. <code>txfx_wp_subpages()</code> can be used to display subpages in the sidebar.  See this plugin's site for details.
 Author: Mark Jaquith
-Version: 0.5
+Version: 0.6
 Author URI: http://txfx.net
 */
 
@@ -25,36 +25,73 @@ Author URI: http://txfx.net
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-function txfx_wp_subpage_display($text) {
+function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_siblings=false) {
 
-/* --- SETTINGS ----------------------------------- */
+	if ( !is_page() ) return $text;
 
-$depth = 5; // how many levels down do you want to go?
+	global $posts, $post;
+	$post = $posts[0];
 
-/* ------------------------------------------------ */
+	$params = txfx_wp_subpages_tag_extraction($post->post_content);
 
-if ( !is_page() ) return $text;
+	if ( is_array($params) || '' == $text || '' == $post->post_content || $post->post_content == "<br />\n" ) {
 
-global $post;
+		if ( isset($params[0]) )	$depth = $params[0];
+		if ( isset($params[1]) )	$show_parent = $params[1];
+		if ( isset($params[2]) )	$show_siblings = $params[2];
 
-if ( strpos($text, '<!--%subpages%-->') !== FALSE || empty($post->post_content) || $post->post_content == "<br />\n" ) {
-	$subpage_text = wp_list_pages('child_of=' . $post->ID . '&depth=' . $depth . '&echo=0&title_li=0');
+		$subpage_text = wp_list_pages('child_of=' . $post->ID . '&depth=' . $depth . '&echo=0&title_li=0');
 
-	// for the preformatted plugin, which will have wrapped the tag in a paragraph
-	$text = str_replace('<p><!--%subpages%--></p>', '<!--%subpages%-->', $text);
+		if ( $show_parent && $post->post_parent ) {
+			$parent = &get_post($post->post_parent);
+			$before = '<ul><li class="page_item">&uarr;<a href="' . get_page_link($parent->ID) . '">' . wp_specialchars($parent->post_title) . '</a>';
+			$after = '</li></ul>';
+		}
 
-	if ( strpos($subpage_text, '</li>') === FALSE )
-		return str_replace('<!--%subpages%-->', '', $text);
+		if ( $show_siblings ) {
+			$siblings = wp_list_pages('child_of=' . $post->post_parent . '&depth=1&echo=0&title_li=0');
+			$subpage_text = preg_replace('#<li (.*?) href="' . get_permalink() . '"(.*?)</li>#', '<li $1 href="' . get_permalink() . '"' . '$2<ul>' . $subpage_text . '</ul></li>', $siblings); // insert marker for current post
+		}
 
-	if ( strpos($text, '<!--%subpages%-->') !== FALSE ) {
-		return str_replace('<!--%subpages%-->', "<ul>\n $subpage_text \n </ul>", $text);
-	} else {
-		return "<ul>\n $subpage_text \n </ul>";
+		// for the preformatted plugin, which will have wrapped the tag in a paragraph
+		$text = preg_replace('#<p><!--%subpages(.*?)%--></p>#i', '<!--%subpages$1%-->', $text);
+
+		if ( strpos($subpage_text, '</li>') === FALSE && !$show_parent )
+			return str_replace('<!--%subpages%-->', '', $text);
+
+		if ( strpos($text, '<!--%subpages') !== FALSE )
+			return preg_replace('#<!--%subpages(.*?)%-->#', $before . "<ul>\n $subpage_text \n </ul>" . $after, $text);
+
+		return $before . "<ul>\n $subpage_text \n </ul>" . $after;
 	}
-}
 
 return $text;
 }
+
+function txfx_wp_subpages_tag_extraction($text) {
+	if ( strpos($text, '<!--%subpages') === false )
+		return false;
+	preg_match('#<!--%subpages\(?([^)]*?)\)?%-->#i', $text, $matches);
+	if ( !strlen($matches[1]) )
+		return array('default', 'default', 'default');
+	$params = explode(',', $matches[1]);
+	return $params;
+}
+
+
+function txfx_wp_subpages($depth=5, $show_parent=false, $show_sibling=false, $before='<ul>', $after='</ul>', $echo=true) {
+	$subpages = txfx_wp_subpage_display('', $depth, $show_parent, $show_sibling);
+
+	if ( !$subpages )
+		return false;
+
+	$output = $before . $subpages . $after;
+
+	if ( !$echo )
+		return $output;
+	echo $output;
+}
+
 
 function txfx_wp_subpage_display_js() {
 global $post_status;
@@ -84,7 +121,7 @@ document.getElementById("quicktags").innerHTML += "<input type=\"button\" class=
 //-->
 </script>
 
-<?php endif;	
+<?php endif;
 }
 
 
