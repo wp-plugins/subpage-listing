@@ -32,15 +32,19 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 	global $posts, $post;
 	$post = $posts[0];
 
-	$params = txfx_wp_subpages_tag_extraction($post->post_content);
+	if ( strpos($text, '<!--%subpages') !== false || is_array($text) || '' == $text || '' == $post->post_content || $post->post_content == "<br />\n" ) {
 
-	if ( is_array($params) || is_array($text) || '' == $text || '' == $post->post_content || $post->post_content == "<br />\n" ) {
+		if ( !is_array($text) && strpos($text, '<!--%subpages') !== false ) {
+			preg_match('#<!--%subpages\(?([^)]*?)\)?%-->#i', $text, $matches);
+			if ( strlen($matches[1]) )
+				$params = explode(',', $matches[1]);
+			if ( isset($params[0]) )	$depth = $params[0];
+			if ( isset($params[1]) )	$show_parent = $params[1];
+			if ( isset($params[2]) )	$show_siblings = $params[2];
+		}
 
-		if ( isset($params[0]) )	$depth = $params[0];
-		if ( isset($params[1]) )	$show_parent = $params[1];
-		if ( isset($params[2]) )	$show_siblings = $params[2];
-
-		$subpage_text = wp_list_pages('child_of=' . $post->ID . '&depth=' . $depth . '&echo=0&title_li=0');
+		if ( $depth > 0 )
+			$subpage_text = wp_list_pages('child_of=' . $post->ID . '&depth=' . $depth . '&echo=0&title_li=0');
 
 		if ( $show_parent && $post->post_parent ) {
 			$parent = &get_post($post->post_parent);
@@ -50,7 +54,10 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 
 		if ( $show_siblings ) {
 			$siblings = wp_list_pages('child_of=' . $post->post_parent . '&depth=1&echo=0&title_li=0');
-			$subpage_text = preg_replace('#<li (.*?) href="' . get_permalink() . '"(.*?)</li>#', '<li $1 href="' . get_permalink() . '"' . '$2<ul>' . $subpage_text . '</ul></li>', $siblings); // insert marker for current post
+			if ( strpos($subpage_text, '</li>') !== false )
+				$subpage_text = preg_replace('#<li (.*?) href="' . get_permalink() . '"(.*?)</li>#i', '<li $1 href="' . get_permalink() . '"' . '$2<ul>' . $subpage_text . '</ul></li>', $siblings);
+			else
+				$subpage_text = preg_replace('#<li (.*?) href="' . get_permalink() . '"(.*?)</li>#i', '', $siblings);
 		}
 
 		// for the preformatted plugin, which will have wrapped the tag in a paragraph
@@ -65,26 +72,16 @@ function txfx_wp_subpage_display($text='', $depth=5, $show_parent=false, $show_s
 
 		$output = $before . $output . $after; // add parent stuff
 
-		if ( is_array($text) ) // if this is called via txfx_wp_subpages()
+		if ( !is_array($text) ) // if this is not called via txfx_wp_subpages()
 			$output = '<ul>' . $output . '</ul>';
+		else
+			return $output;
 
-		if ( strpos($text, '<!--%subpages') !== FALSE )
+		if ( strpos($text, '<!--%subpages') !== false )
 			return preg_replace('#<!--%subpages(.*?)%-->#', $output, $text);
-
 		return $output;
 	}
-
 return $text;
-}
-
-function txfx_wp_subpages_tag_extraction($text) {
-	if ( strpos($text, '<!--%subpages') === false )
-		return false;
-	preg_match('#<!--%subpages\(?([^)]*?)\)?%-->#i', $text, $matches);
-	if ( !strlen($matches[1]) )
-		return array('default', 'default', 'default');
-	$params = explode(',', $matches[1]);
-	return $params;
 }
 
 
