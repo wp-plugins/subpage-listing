@@ -46,4 +46,4 @@ Version 0.6 was a massive update that added a bunch of new functionality. The ab
 
 There is also a new function for use in your templates. Many people wanted to show subpages or siblings in their sidebar, so now you can do that. `<?php txfx_wp_subpages(); ?>` is the most basic form, but it can take many parameters.
 
-`<?php txfx_wp_subpages(5, false, false, '<ul>', '</ul>', true); ?>` will show 5 pages deep (first parameter), hide the parent (second parameter), hide the siblings (third parameter), wrap the whole thing in '<ul>' and '</ul>' (fourth and fifth parameters), and will echo the result (sixth parameter). These happen to be the default settings, that I have just illustrated.
+ `<?php txfx_wp_subpages(5, false, false, '<ul>', '</ul>', true); ?>` will show 5 pages deep (first parameter), hide the parent (second parameter), hide the siblings (third parameter), wrap the whole thing in `<ul>` and `</ul>` (fourth and fifth parameters), and will echo the result (sixth parameter). These happen to be the default settings, that I have just illustrated.
