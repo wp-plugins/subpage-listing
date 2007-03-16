@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=mark%2ep
 Tags: pages, subpages, hierarchy, tree
 Requires at least: 2.0
 Tested up to: 2.1.2
-Stable tag: 0.4
+Stable tag: 0.6.1
 
 Allows you to display a list of the child pages of the currently viewed page.
 
@@ -16,11 +16,14 @@ For example, say you have a parent page called "Parent." Now, say you have 3 pag
 
 Subpage Listing would create a navigation tree for "Parent" that looks like this:
 
-* Child1
-* Child2
-** Grandchild1
-** Grandchild2
-* Child3
+<ul>
+<li>Child1</li>
+<li>Child2<ul>
+	<li>Grandchild1</li>
+	<li>Grandchild2</li>
+</ul></li>
+<li>Child3</li>
+</ul>
 
 This allows you to very easily create a complex hierarchical structure that can be browsed.
 
