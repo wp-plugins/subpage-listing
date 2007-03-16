@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=mark%2ep
 Tags: pages, subpages, hierarchy, tree
 Requires at least: 2.0
 Tested up to: 2.1.2
-Stable tag: trunk
+Stable tag: 0.4
 
 Allows you to display a list of the child pages of the currently viewed page.
 
